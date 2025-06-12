@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Living wage calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      font-family: 'Libre Franklin', sans-serif;
+      background-color: #f9f9f9;
+      padding: 40px;
+      max-width: 600px;
+      margin: auto;
+      color: #333;
+    }
+
+    h2 {
+      text-align: left;
+    }
+
+    label {
+      margin-top: 20px;
+      font-weight: 500;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+      box-sizing: border-box;
+    }
+
+    button {
+      font-family: 'Libre Franklin', sans-serif;
+      background-color: #004085;
+      color: #FFFFFF;
+      border: none;
+      margin-top: 15px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24),0 17px 50px 0 rgba(0,0,0,0.19);
+    }
+
+    .result {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #ffffff;
+      border: 1px solid #dddddd;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      white-space: pre-line;
+    }
+
+    .highlight {
+      font-weight: 700;
+      color: #004085; 
+      background-color: #cce5ff; 
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+
+  </style>
+
+</head>
+<body>
+  <h2>Living wage calculator</h2>
+
+  <label for="adults">Number of adults in your household:</label>
+  <select id="adults">
+    <option value="1">1</option>
+    <option value="2">2</option>
+  </select>
+
+  <label for="workingAdults">Number of working adults:</label>
+  <select id="workingAdults">
+    <option value="1">1</option>
+    <option value="2">2</option>
+  </select>
+
+  <label for="children">Number of children:</label>
+  <select id="children">
+    <option value="0">0</option>
+    <option value="1">1</option>
+    <option value="2">2</option>
+    <option value="3">3</option>
+  </select>
+
+  <button onclick="calculateWage()">Calculate</button>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    const data = {
+      "1 Adult": {
+        living: [27.46, 48.66, 62.21, 80.28],
+        poverty: [7.52, 10.17, 12.81, 15.46],
+        minimum: [16.50, 16.50, 16.50, 16.50]
+      },
+      "2 Adults, 1 working": {
+        living: [37.10, 45.65, 49.86, 59.10],
+        poverty: [10.17, 12.81, 15.46, 18.10],
+        minimum: [16.50, 16.50, 16.50, 16.50]
+      },
+      "2 Adults, 2 working": {
+        living: [18.55, 26.84, 33.61, 41.62],
+        poverty: [5.08, 6.41, 7.73, 9.05],
+        minimum: [16.50, 16.50, 16.50, 16.50]
+      }
+    };
+
+    function calculateWage() {
+      const adults = parseInt(document.getElementById('adults').value);
+      const working = parseInt(document.getElementById('workingAdults').value);
+      const children = parseInt(document.getElementById('children').value);
+      let group = '';
+
+      if (adults === 1) {
+        group = '1 Adult';
+      } else if (adults === 2 && working === 1) {
+        group = '2 Adults, 1 working';
+      } else if (adults === 2 && working === 2) {
+        group = '2 Adults, 2 working';
+      } else {
+        document.getElementById('result').innerText = 'Invalid household setup';
+        return;
+      }
+
+      const livingWage = data[group].living[children];
+      const povertyWage = data[group].poverty[children];
+      const minimumWage = data[group].minimum[children];
+
+      const resultText = `To support a household with ${adults} adult(s), ${working} working, and ${children} child(ren) in the Sacramento metro area:<br>
+<span class="highlight">– Living wage:</span> $${livingWage.toFixed(2)}/hr<br>
+    – California minimum wage: $${minimumWage.toFixed(2)}/hr
+      – Poverty wage: $${povertyWage.toFixed(2)}/hr`;
+
+      const resultDiv = document.getElementById('result');
+      resultDiv.innerHTML = resultText;
+      resultDiv.style.display = 'block';
+    }
+    
+  </script>
+</body>
+</html>
