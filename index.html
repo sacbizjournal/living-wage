@@ -1,276 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Living wage calculator</title>
-  <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body {
-      font-family: 'Libre Franklin', sans-serif;
-      padding: 10px 0;
-      max-width: 600px;
-      margin: auto;
-      color: #333333;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Living wage calculator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
 
-    h2 {
-      text-align: left;
-      margin-top: 5px;
-      margin-bottom: 0;
-    }
+  <body>
+    <h2>Living wage calculator</h2>
+    <p>For one or two working adults with zero to three children in Sacramento region.</p>
 
-    p {
-      margin-top: 5px;
-      font-size: 0.85rem;
-      color: grey;
-    }
+    <label for="adults">Number of adults in your household:</label>
+    <select id="adults">
+      <option value="1">1</option>
+      <option value="2">2</option>
+    </select>
 
-    label {
-      margin-top: 20px;
-      font-weight: 500;
-    }
+    <label for="workingAdults">Number of working adults:</label>
+    <select id="workingAdults">
+      <option value="1">1</option>
+      <option value="2">2</option>
+    </select>
 
-    select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      margin-bottom: 10px;
-      border-radius: 5px;
-      border: 1px solid #cccccc;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
+    <label for="children">Number of children:</label>
+    <select id="children">
+      <option value="0">0</option>
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3">3</option>
+    </select>
 
-    button {
-      font-family: 'Libre Franklin', sans-serif;
-      background-color: #004085;
-      color: #ffffff;
-      border: none;
-      margin-top: 15px;
-      cursor: pointer;
-      transition: background-color 0.3s ease;
-    }
+    <button onclick="calculateWage()">Calculate</button>
 
-    button:hover {
-      box-shadow: 0 12px 16px 0 rgba(0,0,0,0.24), 0 17px 50px 0 rgba(0,0,0,0.19);
-    }
+    <div id="result" class="result"></div>
 
-    .result {
-      display: none;
-      margin-top: 20px;
-      padding: 20px;
-      background-color: #ffffff;
-      border: 1px solid #dddddd;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-      white-space: pre-line;
-    }
+    <div id="chartSection" style="display: none; margin-top: 30px;">
+      <h3>Breakdown of your household's typical annual expenses</h3>
+      <canvas id="expenseChart" width="400" height="300"></canvas>
+    </div>
 
-    .highlight {
-      font-weight: 700;
-      color: #004085;
-      background-color: #cce5ff;
-      padding: 2px 6px;
-      border-radius: 4px;
-      display: inline-block;
-    }
+    <div class="footnote">Notes:</div>
 
-    #expenseChart {
-      display: none;
-      margin-top: 30px;
-    }
+    <div id="footnoteDynamic" class="footnote" style="display: none;">
+      In families where only one adult is working, it's assumed the non-working adult is shouldering all child care responsibilities at no additional cost.
+    </div>
 
-    .footnote {
-      margin-top: 10px;
-      font-size: 0.8rem;
-      color: grey;
-      line-height: 1.4;
-      text-align: left;
-    }
+    <div class="footnote">
+      Living wage data sourced from the Living Wage Institute via 
+      <a href="https://livingwage.mit.edu" target="_blank" rel="noopener noreferrer">https://livingwage.mit.edu</a>. 
+      Data last updated on February 10, 2025. The interactive tool was created by Mengyuan Dong.
+    </div>
 
-    .footnote a {
-      color: darkgrey;
-      text-decoration: underline;
-    }
-  </style>
-</head>
-<body>
-  <h2>Living wage calculator</h2>
-  <p>For one or two working adults with zero to three children in Sacramento region.</p>
-
-  <label for="adults">Number of adults in your household:</label>
-  <select id="adults">
-    <option value="1">1</option>
-    <option value="2">2</option>
-  </select>
-
-  <label for="workingAdults">Number of working adults:</label>
-  <select id="workingAdults">
-    <option value="1">1</option>
-    <option value="2">2</option>
-  </select>
-
-  <label for="children">Number of children:</label>
-  <select id="children">
-    <option value="0">0</option>
-    <option value="1">1</option>
-  </select>
-
-  <button onclick="calculateWage()">Calculate</button>
-
-  <div id="result" class="result"></div>
-
-  <div id="chartSection" style="display: none; margin-top: 30px;">
-    <h3>Your typical annual expenses</h3>
-    <canvas id="expenseChart" width="400" height="300"></canvas>
-  </div>
-
-  <div class="footnote">
-    Living wage data sourced from the Living Wage Institute via 
-    <a href="https://livingwage.mit.edu" target="_blank" rel="noopener noreferrer">https://livingwage.mit.edu</a>. 
-    Data last updated on February 10, 2025. The interactive tool was created by Mengyuan Dong.
-  </div>
-
-  <script>
-    const data = {
-      "1 Adult": {
-        living: [27.46, 48.66],
-        poverty: [7.52, 10.17],
-        minimum: [16.50, 16.50]
-      },
-      "2 Adults, 1 working": {
-        living: [37.10, 45.65],
-        poverty: [10.17, 12.81],
-        minimum: [16.50, 16.50]
-      },
-      "2 Adults, 2 working": {
-        living: [18.55, 26.84],
-        poverty: [5.08, 6.41],
-        minimum: [16.50, 16.50]
-      }
-    };
-
-    const displayLabels = {
-      food: "Food",
-      childCare: "Child care",
-      medical: "Medical",
-      housing: "Housing",
-      transportation: "Transportation",
-      civic: "Civic engagement",
-      internet: "Internet & Mobile",
-      other: "Other"
-    };
-
-    const expensesData = {
-      "1 Adult": {
-        0: { food: 4683, childCare: 0, medical: 3019, housing: 20147, transportation: 10531, civic: 3587, internet: 1472, other: 4749 },
-        1: { food: 6886, childCare: 13904, medical: 10439, housing: 26483, transportation: 12187, civic: 6314, internet: 1472, other: 9123 }
-      },
-      "2 Adults, 1 working": {
-        0: { food: 8585, childCare: 0, medical: 7262, housing: 21232, transportation: 12187, civic: 6314, internet: 2078, other: 9123 },
-        1: { food: 10670, childCare: 0, medical: 11406, housing: 26483, transportation: 15352, civic: 6971, internet: 2078, other: 10121 }
-      },
-      "2 Adults, 2 working": {
-        0: { food: 8585, childCare: 0, medical: 7262, housing: 21232, transportation: 12187, civic: 6314, internet: 2078, other: 9123 },
-        1: { food: 10670, childCare: 0, medical: 11406, housing: 26483, transportation: 15352, civic: 6971, internet: 2078, other: 10121 }
-      }
-    };
-
-    let chartInstance = null;
-
-    function calculateWage() {
-      const adults = parseInt(document.getElementById('adults').value);
-      const working = parseInt(document.getElementById('workingAdults').value);
-      const children = parseInt(document.getElementById('children').value);
-
-      const chartCanvas = document.getElementById('expenseChart');
-
-      let group = '';
-      if (adults === 1) {
-        group = '1 Adult';
-      } else if (adults === 2 && working === 1) {
-        group = '2 Adults, 1 working';
-      } else if (adults === 2 && working === 2) {
-        group = '2 Adults, 2 working';
-      } else {
-        document.getElementById('result').innerText = 'Invalid household setup';
-        return;
-      }
-
-      const livingWage = data[group].living[children];
-      const povertyWage = data[group].poverty[children];
-      const minimumWage = data[group].minimum[children];
-
-      const resultText = `To support a household with ${adults} adult(s), ${working} working, and ${children} child(ren) in the Sacramento metro area:<br>
-        <span class="highlight">– Living wage:</span> $${livingWage.toFixed(2)}/hr<br>
-        – California minimum wage: $${minimumWage.toFixed(2)}/hr<br>
-        – Poverty wage: $${povertyWage.toFixed(2)}/hr`;
-
-      const resultDiv = document.getElementById('result');
-      resultDiv.innerHTML = resultText;
-      resultDiv.style.display = 'block';
-
-      document.getElementById('chartSection').style.display = 'block';
-
-      const expense = expensesData[group][children];
-      const entries = Object.entries(expense);
-
-      // Sort by expense value in descending order
-      const sortedEntries = entries.sort((a, b) => b[1] - a[1]);
-      const labels = sortedEntries.map(entry => displayLabels[entry[0]] || entry[0]);
-      const values = sortedEntries.map(entry => entry[1]);
-
-      if (chartInstance) {
-        chartInstance.destroy();
-      }
-
-      chartInstance = new Chart(chartCanvas, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Annual expenses',
-            data: values,
-            backgroundColor: '#3D6DAC',
-            barThickness: 30,
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return `$${context.parsed.x.toLocaleString()}`;
-                }
-              }
-            }
-          },
-          scales: {
-            x: {
-              ticks: {
-                callback: function(value) {
-                  return '$' + value.toLocaleString();
-                }
-              },
-              grid: {
-                display: false
-              },
-              beginAtZero: true
-            },
-            y: {
-              grid: {
-                display: false
-              }
-            },
-          }
-        }
-      });
-    }
-  </script>
-</body>
+    <script src="script.js"></script>
+    
+  </body>
+  
 </html>
